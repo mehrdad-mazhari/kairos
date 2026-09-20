@@ -1,0 +1,25 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+# Generated simulation outputs
+results/
+*.log
+# Local settings and credentials
+.env
+.env.*
+!.env.example
+.codex/
+.agents/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

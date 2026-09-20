@@ -1,0 +1,7 @@
+# Versions used for the verified run; install with python -m pip install -r requirements.txt
+numpy==2.5.2
+scipy==1.17.1
+matplotlib==3.11.0
+qutip==5.3.1
+scqubits==4.3.1
+pymoo==0.6.1.6
