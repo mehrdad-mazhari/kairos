@@ -72,3 +72,8 @@ with the Python files. The startup wordmark uses original dot-matrix lettering d
 so it needs no external font file or installation. Only the startup uses this
 style; the main interface uses a readable sans-serif (Noto Sans, DejaVu Sans,
 or Arial depending on availability).
+
+
+---
+
+> **Note:** This code was originally written for a hackathon — the UI was added later. I'm happy to fix any issues, so feel free to contact me at **mehrdadm@tutamail.com**.
