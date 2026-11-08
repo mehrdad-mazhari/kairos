@@ -1,79 +1,62 @@
-# Kairos
+# Kairos — Robust Quantum Optimal Control for Superconducting Qubits
 
-A Python desktop application for simulating and comparing transmon X-gate
-pulses, with optional NSGA-III optimization and GRAPE refinement.
+Kairos optimizes superconducting transmon X gates under uncertainty. It provides conventional GRAPE, fixed Risk-Aware GRAPE, CVaR continuation, calibrated DRAG references, Fourier controls, five-level Lindblad propagation, Monte Carlo robustness analysis, optional JAX acceleration, and statistical fidelity certification. CPU QuTiP remains the authoritative production solver.
 
-Compare Gaussian, DRAG, higher-order DRAG, Wah-Wah, BB1 and CORPSE pulses.
-Results include nominal fidelity, independent Monte Carlo fidelity, leakage,
-selection eligibility, and reproducible pulse parameters and waveforms.
-Monte Carlo selection and validation run after the enabled optimizers.
+**Public release is blocked pending an owner-approved license and citation metadata.** This is a prepared research release, not a claim of journal publication.
 
-On launch, a black startup screen types `kairos` before the main interface appears.
+## Physical model
 
-## Install and launch
+The confirmatory study uses a five-level Duffing oscillator in the rotating-wave approximation with Lindblad relaxation/dephasing, 15.6 ns gates and an 80 MHz joint I/Q amplitude constraint including 1.03 manufacturing headroom. Fidelity and leakage average six computational input states without renormalization. The API retains legacy three-level defaults: explicitly use `Device(levels=5)` for this study. Uncertainty is quasi-static; model details and exact distributions are frozen in the protocol.
 
-Tested with Python 3.12 on Linux. Open a terminal in this folder.
+## Installation and CPU examples
+
+Linux and Python 3.12 are the tested environment. Other platforms and Python versions are unverified. From this repository root:
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
-python optimization_ui.py
+python -m pip install -e '.[test]'
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR=/tmp/kairos-mpl
+python examples/demo.py simulate
+python examples/demo.py evaluate
+python examples/demo.py grape
+python examples/demo.py risk
+python examples/demo.py continuation
+python examples/demo.py robustness
+python -m unittest discover -s tests -v
+(cd reproducibility/original && python -m unittest discover -p 'test_*.py')
+python scripts/verify_release.py
 ```
 
-On Ubuntu/Debian, if virtual environments or Tkinter are missing, install
-`python3-venv` and `python3-tk` using your system package manager first.
-On Windows, use `py -3.12 -m venv .venv` and activate with
-`.venv\Scripts\activate` in Command Prompt, then run the same pip and launch
-commands. Windows has not been verified in this release.
+Examples are intentionally tiny demonstrations, not converged research optimizations or published results. They reuse a frozen starting pulse and a separate demonstration seed. They never regenerate the independent cohort.
 
-Enter the device parameters, choose whether to enable NSGA-III and GRAPE,
-and click **Run optimization**. NSGA-III is unchecked by default in the UI.
-Generated results are saved in `results/` and are excluded from version control.
-Full optimization can take substantial time. Quick mode is an execution check,
-not evidence that the physical quality targets are satisfied.
+For NVIDIA GPUs on Linux, install `python -m pip install -r requirements-gpu.txt` into a separate environment after CPU installation. See [GPU guidance](docs/JAX_ACCELERATION.md). Set the optimizer's `acceleration` options to `backend: jax_gpu, precision: float64`; retain accuracy qualification and CPU fallback. Ordinary optional execution falls back to CPU when GPU initialization fails; strict research settings fail closed. No GPU is required for CPU use. RTX 2080 Super FP64 was tested historically; FP32 failed the frozen numerical tolerance and is not qualified. Other hardware is unverified. Historical speedups depend on batch size and workload; they are not universal guarantees.
 
-## Verify the code
+## Independent confirmatory results
 
-```bash
-python -m unittest test_challenge test_workflow test_pulse_methods
-```
+Exactly 2,000 devices and 10,000 candidate-device production evaluations were completed using five fixed waveforms, including one ineligible diagnostic. The four primary candidates were:
 
-## Understanding the comparison
+| Method | Mean fidelity | P05 fidelity | CVaR95 infidelity | Engineering |
+|---|---:|---:|---:|---|
+| Conventional GRAPE | 0.998653219 | 0.997398629 | 0.0030237417 | PASS |
+| CVaR continuation | 0.998626354 | 0.997388012 | 0.00303112568 | PASS |
+| Fixed Risk-Aware GRAPE | 0.998498366 | 0.997058879 | 0.00338305312 | PASS |
+| Calibrated DRAG | 0.998480563 | 0.997004501 | 0.00340873105 | PASS |
 
-BB1 and CORPSE use DRAG-shaped segments and explicitly longer durations.
-They are comparison-only for a fixed-duration task, not eligible winners or
-GRAPE seeds. Their simulated fidelities include their full actual durations.
-The shaped CORPSE implementation is an adaptation of the canonical rotation
-sequence, not a guarantee of ideal square-pulse error cancellation.
-The program reports the best eligible candidate it evaluated, not a proven
-global optimum. This is simulation software, not experimental validation.
+Conventional GRAPE had the lowest observed CVaR95. Continuation did not demonstrate statistically significant superiority over conventional GRAPE; this does not establish equivalence. Both beat calibrated DRAG in prespecified independent comparisons. Fixed-risk GRAPE performed worse than conventional GRAPE here, not universally. All four eligible frozen pulses passed engineering certification. The excluded diagnostic violated leakage on 416/2,000 devices and remains reported.
 
-## Files
+The overall reporting convention returned **PARTIALLY CONFIRMED** (four of six qualified favorable contrasts). Individual prespecified contrasts remain authoritative. Statistical significance, engineering certification, numerical reliability and publication readiness are separate assessments. See [confirmatory report](results/confirmatory/confirmatory_validation_report.md) and [six corrected intervals](results/confirmatory/bootstrap_confidence_intervals.csv).
 
-- `optimization_ui.py`: desktop application.
-- `run_all.py`: command-line launcher and test runner.
-- `robust_optimization.py`, `nsga3.py`, `grape.py`: optimization and selection.
-- `challenge_model.py`, `pulse_methods.py`, `pulse_shapes.py`: physical model and pulses.
-- `challenge_config.json`: default device, optimization and quality settings.
-- `test_*.py`: physics, pulse reconstruction and workflow tests.
-- `core.py`, `analysis.py`, `calibration.py`, `pulse-shaping.py`: original exploratory scripts.
-- [Technical guide](TECHNICAL_GUIDE.md): detailed model, controls, outputs and references.
-- [First GitHub upload](GITHUB_FIRST_UPLOAD.md): beginner instructions.
+The original 27-trial development study had nonbinding resource limits and identical waveforms across budget regimes. The separate 54-trial corrected study used actual resource limits. Neither establishes universal efficiency superiority. The earlier approximately 21% exploratory improvement over conventional GRAPE was not independently confirmed for the selected pulses. Read [results summary](docs/results_summary.md).
 
-No project license has been selected in this prepared copy.
+## Scientific limitations
 
+These are simulated devices, not hardware measurements. Duffing/RWA truncation, Markovian Lindblad noise and quasi-static uncertainty are model assumptions. Monte Carlo samples and numerical repeat checks are finite. Development optimizations were budget-limited rather than convergence-certified. Computational costs include different kinds of solver work; cost comparisons require genuinely matched budgets. Fixed-pulse validation is not an independent replication of aggregate optimizer performance.
 
-## Appearance and font
+## Reproducibility
 
-Kairos uses a dark charcoal theme with gold accents and the supplied logo in
-the header, window icon, and animated startup screen. Keep the `assets/` folder
-with the Python files. The startup wordmark uses original dot-matrix lettering drawn directly in Tk,
-so it needs no external font file or installation. Only the startup uses this
-style; the main interface uses a readable sans-serif (Noto Sans, DejaVu Sans,
-or Arial depending on availability).
+[Reproducibility status](docs/reproducibility_status.md) explains preserved source, frozen hashes, protocol, seeds and checkpoints. Original relative paths map to `reproducibility/original/`; immutable files keep their original bytes. The installable package qualifies internal imports and has its own hashes. The confirmatory cohort seed 941206 has already been used; bootstrap seed is 941207. Do not redraw the cohort, rerun the campaign into a fresh output, or tune using validation outcomes. Existing records support read-only verification without expensive recomputation.
 
+## Citation and licensing
 
----
-
-> **Note:** This code was originally written for a hackathon — the UI was added later. I'm happy to fix any issues, so feel free to contact me at **mehrdadm@tutamail.com**.
+Use [CITATION.cff](CITATION.cff) with the exact version/commit used. Author metadata and a permanent identifier await owner confirmation; no DOI or published paper is claimed. See [licensing and citation status](docs/licensing_and_citation.md) before distribution. Dependencies retain their own licenses.

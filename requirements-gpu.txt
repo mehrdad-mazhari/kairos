@@ -1,0 +1,3 @@
+# Linux NVIDIA; system driver >=525 per JAX installation documentation.
+# CUDA libraries are installed by the extra. CPU production remains independent.
+jax[cuda12]==0.12.0.1
