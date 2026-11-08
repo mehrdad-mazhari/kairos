@@ -1,6 +1,0 @@
-cff-version: 1.2.0
-message: "Cite this software by title and the exact version or commit used. Author metadata and a permanent archive identifier await owner confirmation."
-title: "Kairos — Robust Quantum Optimal Control for Superconducting Qubits"
-type: software
-version: 0.1.0
-abstract: "Computational optimization and certification of transmon X gates under quasi-static uncertainty."
